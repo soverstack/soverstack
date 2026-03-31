@@ -21,14 +21,10 @@ builds:
       - -s -w -X main.Version={{.Version}}
 
 archives:
-  # Zip/tar.gz archives (used by Homebrew, Scoop, Chocolatey)
-  - id: archive
-    formats:
-      - tar.gz
+  - format: tar.gz
     format_overrides:
       - goos: windows
-        formats:
-          - zip
+        format: zip
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 
 checksum:
@@ -48,9 +44,6 @@ release:
 
     **Windows:**
     ```
-    choco install soverstack
-    ```
-    ```
     scoop bucket add soverstack https://github.com/soverstack/scoop-bucket
     scoop install soverstack
     ```
@@ -58,9 +51,7 @@ release:
     **Requirements:** [Docker](https://www.docker.com/products/docker-desktop/)
 
 brews:
-  - ids:
-      - archive
-    repository:
+  - repository:
       owner: soverstack
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
@@ -71,26 +62,8 @@ brews:
       - name: docker
         type: recommended
 
-chocolateys:
-  - ids:
-      - archive
-    name: soverstack
-    owners: soverstack
-    title: Soverstack
-    authors: Soverstack
-    project_url: "https://github.com/soverstack/launcher"
-    license_url: "https://github.com/soverstack/launcher/blob/main/LICENSE"
-    project_source_url: "https://github.com/soverstack/launcher"
-    bug_tracker_url: "https://github.com/soverstack/launcher/issues"
-    tags: "soverstack infrastructure devops ansible terraform proxmox"
-    summary: "Sovereign infrastructure orchestration CLI"
-    description: "Soverstack is a CLI for sovereign infrastructure orchestration on Proxmox bare metal servers."
-    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
-
 scoops:
-  - ids:
-      - archive
-    repository:
+  - repository:
       owner: soverstack
       name: scoop-bucket
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
