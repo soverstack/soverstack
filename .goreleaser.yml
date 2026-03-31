@@ -21,8 +21,15 @@ builds:
       - -s -w -X main.Version={{.Version}}
 
 archives:
-  - formats: ['binary']
-    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+  # Zip/tar.gz archives (used by Homebrew, Scoop, Chocolatey)
+  - id: archive
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
 
 checksum:
   name_template: "checksums.txt"
@@ -51,7 +58,9 @@ release:
     **Requirements:** [Docker](https://www.docker.com/products/docker-desktop/)
 
 brews:
-  - repository:
+  - ids:
+      - archive
+    repository:
       owner: soverstack
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
@@ -63,7 +72,9 @@ brews:
         type: recommended
 
 chocolateys:
-  - name: soverstack
+  - ids:
+      - archive
+    name: soverstack
     owners: soverstack
     title: Soverstack
     authors: Soverstack
@@ -77,7 +88,9 @@ chocolateys:
     api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
 
 scoops:
-  - repository:
+  - ids:
+      - archive
+    repository:
       owner: soverstack
       name: scoop-bucket
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
