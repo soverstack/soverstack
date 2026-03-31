@@ -9,8 +9,9 @@ $binaryName = "soverstack.exe"
 
 Write-Host "Installing Soverstack Launcher..." -ForegroundColor Cyan
 
-# Get latest release tag from GitHub API
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing
+# Get latest release (including prereleases)
+$releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=1" -UseBasicParsing
+$release = $releases[0]
 $tag = $release.tag_name
 $version = $tag.TrimStart("v")
 

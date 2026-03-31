@@ -26,8 +26,8 @@ esac
 
 echo "Installing Soverstack Launcher (${OS}/${ARCH})..."
 
-# Get latest release info from GitHub API
-TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | cut -d'"' -f4)
+# Get latest release (including prereleases)
+TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=1" | grep '"tag_name"' | head -1 | cut -d'"' -f4)
 VERSION=${TAG#v}
 
 echo "Latest version: ${VERSION}"
