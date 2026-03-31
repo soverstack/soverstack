@@ -32,37 +32,40 @@ The launcher is a **dumb proxy** with one job: orchestrate Docker container exec
 
 ## Installation
 
-### Option 1: Download Pre-built Binary
+### macOS / Linux
 
-Download the binary for your platform from the [Releases](https://github.com/soverstack/launcher/releases) page:
-
-| Platform | Binary |
-|----------|--------|
-| Windows (x64) | `soverstack-windows-amd64.exe` |
-| Linux (x64) | `soverstack-linux-amd64` |
-| Linux (ARM64) | `soverstack-linux-arm64` |
-| macOS (Intel) | `soverstack-darwin-amd64` |
-| macOS (Apple Silicon) | `soverstack-darwin-arm64` |
-
-**Windows:**
-1. Download `soverstack-windows-amd64.exe`
-2. Rename to `soverstack.exe`
-3. Move to a directory in your PATH (e.g., `C:\Users\<you>\bin\`)
-4. Or add its directory to your PATH environment variable
-
-**Linux / macOS:**
 ```bash
-# Download (replace OS and ARCH with your platform)
-curl -L -o soverstack https://github.com/soverstack/launcher/releases/latest/download/soverstack-linux-amd64
-
-# Make executable
-chmod +x soverstack
-
-# Move to PATH
-sudo mv soverstack /usr/local/bin/
+brew install soverstack/tap/soverstack
 ```
 
-### Option 2: Build from Source
+### Windows
+
+```powershell
+# Chocolatey
+choco install soverstack
+
+# or Scoop
+scoop bucket add soverstack https://github.com/soverstack/scoop-bucket
+scoop install soverstack
+```
+
+### Alternative: one-liner script (no package manager needed)
+
+```bash
+# Linux / macOS
+curl -fsSL https://raw.githubusercontent.com/soverstack/launcher/main/install.sh | bash
+
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/soverstack/launcher/main/install.ps1 | iex
+```
+
+### Verify
+
+```bash
+soverstack --version
+```
+
+### Build from Source
 
 Requires [Go 1.21+](https://go.dev/dl/).
 

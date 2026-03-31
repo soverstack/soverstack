@@ -21,49 +21,45 @@ jobs:
       - run: go vet ./...
       - run: go test ./...
 
-  build:
+  # SNAPSHOT build on push to main (no publish to package managers)
+  snapshot:
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-
-      - name: Determine version
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
-            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-            echo "is_release=true" >> "$GITHUB_OUTPUT"
-          else
-            VERSION=$(jq -r .version version.json)
-            echo "version=${VERSION}-SNAPSHOT" >> "$GITHUB_OUTPUT"
-            echo "tag=v${VERSION}-SNAPSHOT" >> "$GITHUB_OUTPUT"
-            echo "is_release=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Cross-compile
-        run: |
-          VERSION=${{ steps.version.outputs.version }}
-          LDFLAGS="-s -w -X main.Version=${VERSION}"
-          mkdir -p dist
-
-          GOOS=windows GOARCH=amd64 go build -ldflags="$LDFLAGS" -o dist/soverstack-windows-amd64.exe .
-          GOOS=linux   GOARCH=amd64 go build -ldflags="$LDFLAGS" -o dist/soverstack-linux-amd64 .
-          GOOS=linux   GOARCH=arm64 go build -ldflags="$LDFLAGS" -o dist/soverstack-linux-arm64 .
-          GOOS=darwin  GOARCH=amd64 go build -ldflags="$LDFLAGS" -o dist/soverstack-darwin-amd64 .
-          GOOS=darwin  GOARCH=arm64 go build -ldflags="$LDFLAGS" -o dist/soverstack-darwin-arm64 .
-
-          ls -lh dist/
-
-      - name: Create or update release
-        uses: softprops/action-gh-release@v2
+      - uses: goreleaser/goreleaser-action@v6
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: Soverstack Launcher ${{ steps.version.outputs.version }}
-          prerelease: ${{ steps.version.outputs.is_release != 'true' }}
-          generate_release_notes: true
-          files: dist/*
+          version: latest
+          args: release --snapshot --clean
+      - name: Upload snapshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshot-binaries
+          path: dist/soverstack-*
+
+  # Stable release on tag push (publishes to Homebrew, Scoop, Chocolatey)
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}

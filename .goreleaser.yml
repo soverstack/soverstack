@@ -1,0 +1,86 @@
+project_name: soverstack
+
+before:
+  hooks:
+    - go mod tidy
+    - go vet ./...
+
+builds:
+  - main: .
+    binary: soverstack
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+
+archives:
+  - formats: ['binary']
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+release:
+  github:
+    owner: soverstack
+    name: launcher
+  header: |
+    ## Install
+
+    **macOS / Linux:**
+    ```
+    brew install soverstack/tap/soverstack
+    ```
+
+    **Windows:**
+    ```
+    choco install soverstack
+    ```
+    ```
+    scoop bucket add soverstack https://github.com/soverstack/scoop-bucket
+    scoop install soverstack
+    ```
+
+    **Requirements:** [Docker](https://www.docker.com/products/docker-desktop/)
+
+brews:
+  - repository:
+      owner: soverstack
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/soverstack/launcher"
+    description: "Sovereign infrastructure orchestration CLI"
+    license: "AGPL-3.0-only"
+    dependencies:
+      - name: docker
+        type: recommended
+
+chocolateys:
+  - name: soverstack
+    owners: soverstack
+    title: Soverstack
+    authors: Soverstack
+    project_url: "https://github.com/soverstack/launcher"
+    license_url: "https://github.com/soverstack/launcher/blob/main/LICENSE"
+    project_source_url: "https://github.com/soverstack/launcher"
+    bug_tracker_url: "https://github.com/soverstack/launcher/issues"
+    tags: "soverstack infrastructure devops ansible terraform proxmox"
+    summary: "Sovereign infrastructure orchestration CLI"
+    description: "Soverstack is a CLI for sovereign infrastructure orchestration on Proxmox bare metal servers."
+    api_key: "{{ .Env.CHOCOLATEY_API_KEY }}"
+
+scoops:
+  - repository:
+      owner: soverstack
+      name: scoop-bucket
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/soverstack/launcher"
+    description: "Sovereign infrastructure orchestration CLI"
+    license: "AGPL-3.0-only"
