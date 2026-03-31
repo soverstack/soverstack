@@ -55,7 +55,7 @@ brews:
       owner: soverstack
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/soverstack/launcher"
+    homepage: "https://github.com/soverstack/cli-launcher"
     description: "Sovereign infrastructure orchestration CLI"
     license: "AGPL-3.0-only"
     dependencies:
@@ -67,6 +67,6 @@ scoops:
       owner: soverstack
       name: scoop-bucket
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/soverstack/launcher"
+    homepage: "https://github.com/soverstack/cli-launcher"
     description: "Sovereign infrastructure orchestration CLI"
     license: "AGPL-3.0-only"

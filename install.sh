@@ -1,10 +1,10 @@
 #!/bin/bash
 # Soverstack Launcher Installer
-# Usage: curl -fsSL https://raw.githubusercontent.com/soverstack/launcher/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.sh | bash
 
 set -e
 
-REPO="soverstack/launcher"
+REPO="soverstack/cli-launcher"
 INSTALL_DIR="/usr/local/bin"
 BINARY_NAME="soverstack"
 

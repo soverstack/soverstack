@@ -6,8 +6,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/soverstack/launcher/internal/docker"
-	"github.com/soverstack/launcher/internal/platform"
+	"github.com/soverstack/cli-launcher/internal/docker"
+	"github.com/soverstack/cli-launcher/internal/platform"
 )
 
 const (

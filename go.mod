@@ -1,4 +1,4 @@
-module github.com/soverstack/launcher
+module github.com/soverstack/cli-launcher
 
 go 1.25.0
 
