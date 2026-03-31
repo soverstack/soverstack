@@ -24,28 +24,36 @@ case "$ARCH" in
   *)             echo "Error: Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-ASSET="soverstack-${OS}-${ARCH}"
 echo "Installing Soverstack Launcher (${OS}/${ARCH})..."
 
-# Get latest release download URL
-DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${ASSET}"
+# Get latest release info from GitHub API
+TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name"' | cut -d'"' -f4)
+VERSION=${TAG#v}
 
-# Download
-TMP=$(mktemp)
-echo "Downloading ${DOWNLOAD_URL}..."
-curl -fsSL "$DOWNLOAD_URL" -o "$TMP"
+echo "Latest version: ${VERSION}"
+
+ASSET="soverstack-${VERSION}-${OS}-${ARCH}.tar.gz"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
+
+# Download and extract
+TMP_DIR=$(mktemp -d)
+echo "Downloading ${ASSET}..."
+curl -fsSL "$DOWNLOAD_URL" -o "${TMP_DIR}/${ASSET}"
+tar xzf "${TMP_DIR}/${ASSET}" -C "$TMP_DIR"
 
 # Install
-chmod +x "$TMP"
 if [ -w "$INSTALL_DIR" ]; then
-  mv "$TMP" "${INSTALL_DIR}/${BINARY_NAME}"
+  mv "${TMP_DIR}/soverstack" "${INSTALL_DIR}/${BINARY_NAME}"
 else
   echo "Installing to ${INSTALL_DIR} (requires sudo)..."
-  sudo mv "$TMP" "${INSTALL_DIR}/${BINARY_NAME}"
+  sudo mv "${TMP_DIR}/soverstack" "${INSTALL_DIR}/${BINARY_NAME}"
 fi
 
+chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
+rm -rf "$TMP_DIR"
+
 echo ""
-echo "Soverstack installed successfully!"
+echo "Soverstack ${VERSION} installed successfully!"
 echo ""
 $BINARY_NAME --version
 echo ""

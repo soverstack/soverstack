@@ -4,23 +4,42 @@
 $ErrorActionPreference = "Stop"
 
 $repo = "soverstack/cli-launcher"
-$asset = "soverstack-windows-amd64.exe"
 $installDir = "$env:LOCALAPPDATA\Soverstack"
 $binaryName = "soverstack.exe"
 
 Write-Host "Installing Soverstack Launcher..." -ForegroundColor Cyan
+
+# Get latest release tag from GitHub API
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing
+$tag = $release.tag_name
+$version = $tag.TrimStart("v")
+
+Write-Host "Latest version: $version"
+
+# Find the windows zip asset
+$asset = $release.assets | Where-Object { $_.name -match "windows-amd64\.zip$" } | Select-Object -First 1
+
+if (-not $asset) {
+    Write-Host "Error: Could not find Windows binary in release $tag" -ForegroundColor Red
+    exit 1
+}
 
 # Create install directory
 if (-not (Test-Path $installDir)) {
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 }
 
-# Download latest release
-$downloadUrl = "https://github.com/$repo/releases/latest/download/$asset"
-$destPath = Join-Path $installDir $binaryName
+# Download and extract
+$zipPath = "$env:TEMP\soverstack.zip"
+Write-Host "Downloading $($asset.name)..."
+Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath -UseBasicParsing
 
-Write-Host "Downloading from $downloadUrl..."
-Invoke-WebRequest -Uri $downloadUrl -OutFile $destPath -UseBasicParsing
+Expand-Archive -Path $zipPath -DestinationPath "$env:TEMP\soverstack-extract" -Force
+Copy-Item "$env:TEMP\soverstack-extract\soverstack.exe" "$installDir\$binaryName" -Force
+
+# Cleanup
+Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:TEMP\soverstack-extract" -Recurse -Force -ErrorAction SilentlyContinue
 
 # Add to PATH if not already there
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -31,11 +50,10 @@ if ($userPath -notlike "*$installDir*") {
 }
 
 Write-Host ""
-Write-Host "Soverstack installed successfully!" -ForegroundColor Green
+Write-Host "Soverstack $version installed successfully!" -ForegroundColor Green
 Write-Host ""
 
-# Show version
-& $destPath --version
+& "$installDir\$binaryName" --version
 
 Write-Host ""
 
