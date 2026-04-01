@@ -9,38 +9,45 @@ $binaryName = "soverstack.exe"
 
 Write-Host "Installing Soverstack Launcher..." -ForegroundColor Cyan
 
-# Get latest release (including prereleases)
-$releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=1" -UseBasicParsing
-$release = $releases[0]
+# Get latest stable release
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing
 $tag = $release.tag_name
 $version = $tag.TrimStart("v")
 
 Write-Host "Latest version: $version"
-
-# Find the windows zip asset
-$asset = $release.assets | Where-Object { $_.name -match "windows-amd64\.zip$" } | Select-Object -First 1
-
-if (-not $asset) {
-    Write-Host "Error: Could not find Windows binary in release $tag" -ForegroundColor Red
-    exit 1
-}
 
 # Create install directory
 if (-not (Test-Path $installDir)) {
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
 }
 
-# Download and extract
-$zipPath = "$env:TEMP\soverstack.zip"
-Write-Host "Downloading $($asset.name)..."
-Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zipPath -UseBasicParsing
+$destPath = Join-Path $installDir $binaryName
 
-Expand-Archive -Path $zipPath -DestinationPath "$env:TEMP\soverstack-extract" -Force
-Copy-Item "$env:TEMP\soverstack-extract\soverstack.exe" "$installDir\$binaryName" -Force
+# Try zip archive first, then fall back to raw binary
+$zipAsset = $release.assets | Where-Object { $_.name -match "windows-amd64\.zip$" } | Select-Object -First 1
+$exeAsset = $release.assets | Where-Object { $_.name -match "windows-amd64\.exe$" } | Select-Object -First 1
 
-# Cleanup
-Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
-Remove-Item "$env:TEMP\soverstack-extract" -Recurse -Force -ErrorAction SilentlyContinue
+if ($zipAsset) {
+    # Download and extract zip
+    $zipPath = "$env:TEMP\soverstack.zip"
+    Write-Host "Downloading $($zipAsset.name)..."
+    Invoke-WebRequest -Uri $zipAsset.browser_download_url -OutFile $zipPath -UseBasicParsing
+
+    Expand-Archive -Path $zipPath -DestinationPath "$env:TEMP\soverstack-extract" -Force
+    Copy-Item "$env:TEMP\soverstack-extract\soverstack.exe" $destPath -Force
+
+    Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
+    Remove-Item "$env:TEMP\soverstack-extract" -Recurse -Force -ErrorAction SilentlyContinue
+
+} elseif ($exeAsset) {
+    # Download raw binary
+    Write-Host "Downloading $($exeAsset.name)..."
+    Invoke-WebRequest -Uri $exeAsset.browser_download_url -OutFile $destPath -UseBasicParsing
+
+} else {
+    Write-Host "Error: Could not find Windows binary in release $tag" -ForegroundColor Red
+    exit 1
+}
 
 # Add to PATH if not already there
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
@@ -54,7 +61,7 @@ Write-Host ""
 Write-Host "Soverstack $version installed successfully!" -ForegroundColor Green
 Write-Host ""
 
-& "$installDir\$binaryName" --version
+& $destPath --version
 
 Write-Host ""
 

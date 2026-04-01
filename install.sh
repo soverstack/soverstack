@@ -26,22 +26,33 @@ esac
 
 echo "Installing Soverstack Launcher (${OS}/${ARCH})..."
 
-# Get latest release (including prereleases)
-TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases?per_page=1" | grep '"tag_name"' | head -1 | cut -d'"' -f4)
+# Get latest stable release
+RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest")
+TAG=$(echo "$RELEASE_JSON" | grep '"tag_name"' | head -1 | cut -d'"' -f4)
 VERSION=${TAG#v}
 
 echo "Latest version: ${VERSION}"
 
-ASSET="soverstack-${VERSION}-${OS}-${ARCH}.tar.gz"
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ASSET}"
-
-# Download and extract
 TMP_DIR=$(mktemp -d)
-echo "Downloading ${ASSET}..."
-curl -fsSL "$DOWNLOAD_URL" -o "${TMP_DIR}/${ASSET}"
-tar xzf "${TMP_DIR}/${ASSET}" -C "$TMP_DIR"
+
+# Try tar.gz archive first, then fall back to raw binary
+ARCHIVE="soverstack-${VERSION}-${OS}-${ARCH}.tar.gz"
+ARCHIVE_URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE}"
+
+RAW_BINARY="soverstack-${OS}-${ARCH}"
+RAW_URL="https://github.com/${REPO}/releases/download/${TAG}/${RAW_BINARY}"
+
+if curl -fsSL --head "$ARCHIVE_URL" > /dev/null 2>&1; then
+  echo "Downloading ${ARCHIVE}..."
+  curl -fsSL "$ARCHIVE_URL" -o "${TMP_DIR}/${ARCHIVE}"
+  tar xzf "${TMP_DIR}/${ARCHIVE}" -C "$TMP_DIR"
+else
+  echo "Downloading ${RAW_BINARY}..."
+  curl -fsSL "$RAW_URL" -o "${TMP_DIR}/soverstack"
+fi
 
 # Install
+chmod +x "${TMP_DIR}/soverstack"
 if [ -w "$INSTALL_DIR" ]; then
   mv "${TMP_DIR}/soverstack" "${INSTALL_DIR}/${BINARY_NAME}"
 else
@@ -49,7 +60,6 @@ else
   sudo mv "${TMP_DIR}/soverstack" "${INSTALL_DIR}/${BINARY_NAME}"
 fi
 
-chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 rm -rf "$TMP_DIR"
 
 echo ""

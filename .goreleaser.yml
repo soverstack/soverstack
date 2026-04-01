@@ -33,7 +33,7 @@ checksum:
 release:
   github:
     owner: soverstack
-    name: launcher
+    name: cli-launcher
   header: |
     ## Install
 
