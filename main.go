@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/soverstack/cli-launcher/internal/docker"
-	"github.com/soverstack/cli-launcher/internal/platform"
 	"github.com/soverstack/cli-launcher/internal/selfupdate"
 	"github.com/soverstack/cli-launcher/internal/update"
 )
@@ -50,7 +49,7 @@ func run() error {
 
 	// Handle version flag
 	if len(args) > 0 && (args[0] == "--version" || args[0] == "-v") {
-		fmt.Printf("soverstack launcher version %s\n", Version)
+		fmt.Printf("soverstack version %s\n", Version)
 		return nil
 	}
 
@@ -67,15 +66,8 @@ func run() error {
 		return selfupdate.Run(method)
 	}
 
-	// Extract version from platform.yaml
-	// Falls back to launcher's own version + "-SNAPSHOT" if not found
-	version, err := platform.ExtractVersion(args)
-	if err != nil || version == "latest" {
-		version = Version + "-SNAPSHOT"
-	}
-
-	// Build full image name
-	imageName := fmt.Sprintf("%s:%s", imageRepository, version)
+	// Use the launcher's own version to determine the runtime image
+	imageName := fmt.Sprintf("%s:%s", imageRepository, Version)
 
 	// Step 3: Check Docker is available
 	if err := docker.CheckAvailable(ctx); err != nil {

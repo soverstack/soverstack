@@ -12,13 +12,12 @@ User → launcher (native binary) → Docker container → CLI (Node.js) → Ans
 
 The launcher is a **dumb proxy** with one job: orchestrate Docker container execution. It:
 
-1. Reads `platform.yaml` to extract runtime version
-2. Checks Docker is available
-3. Pulls `soverstack/cli-runtime:<version>` image
-4. Mounts current directory as `/workspace`
-5. Forwards all arguments to the container
-6. Streams stdin/stdout/stderr in real-time
-7. Exits with the CLI's exit code
+1. Checks Docker is available
+2. Pulls `soverstack/cli-runtime:<version>` image (version = launcher version)
+3. Mounts current directory as `/workspace`
+4. Forwards all arguments to the container
+5. Streams stdin/stdout/stderr in real-time
+6. Exits with the CLI's exit code
 
 ## What This Does NOT Do
 
@@ -159,26 +158,20 @@ soverstack generate ssh --dc eu:zone-paris  # Specific DC
 ### How It Works
 
 1. **User runs**: `soverstack plan`
-2. **Launcher reads**: `platform.yaml` → `version: v1.0.0`
-3. **Pulls image**: `docker pull ghcr.io/soverstack/cli-runtime:v1.0.0`
-4. **Runs container**: mounts current directory at `/workspace`
-5. **Forwards I/O**: stdin/stdout/stderr streamed in real-time
-6. **Exits**: with the same exit code as the CLI
+2. **Pulls image**: `docker pull ghcr.io/soverstack/cli-runtime:1.2.0` (matching launcher version)
+3. **Runs container**: mounts current directory at `/workspace`
+4. **Forwards I/O**: stdin/stdout/stderr streamed in real-time
+5. **Exits**: with the same exit code as the CLI
 
-## Version Extraction
+## Versioning
 
-The launcher reads `platform.yaml` to determine which runtime version to use:
+The launcher uses its own version to pull the matching runtime image:
 
-```yaml
-name: prod
-version: v1.0.0  # ← This field
-domain: example.com
+```
+soverstack v1.2.0 → ghcr.io/soverstack/cli-runtime:1.2.0
 ```
 
-| Scenario | Behavior |
-|----------|----------|
-| `platform.yaml` exists with valid version | Use that version |
-| `platform.yaml` missing or malformed | Default to `latest` |
+Launcher version and runtime version are always in sync. To use a different version, update the launcher with `soverstack update` or install a specific version.
 
 ## Error Handling
 
@@ -277,7 +270,7 @@ launcher/
 ## Design Principles
 
 1. **Launcher is a proxy** - No business logic, no validation, no generation
-2. **Fail gracefully on config** - Default to `latest` if version extraction fails
+2. **Explicit versions** - Launcher version = runtime version, no `latest` tag
 3. **Forward everything** - All args passed through without interpretation
 4. **Container is ephemeral** - AutoRemove ensures no state persistence
 5. **I/O is transparent** - Attach before start, stream bidirectionally
