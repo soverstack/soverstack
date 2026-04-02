@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/soverstack/cli-launcher/internal/docker"
@@ -67,11 +68,26 @@ func run() error {
 			targetVersion = args[1]
 		}
 		fmt.Printf("Current version: %s (installed via %s)\n", Version, method)
-		return selfupdate.Run(method, targetVersion)
+		if err := selfupdate.Run(method, targetVersion); err != nil {
+			return err
+		}
+		// Pre-pull the new image in background so next command is instant
+		fmt.Println("Pulling runtime image in background...")
+		exec.Command(os.Args[0], "pull").Start()
+		return nil
 	}
 
 	// Use the launcher's own version to determine the runtime image
 	imageName := fmt.Sprintf("%s:%s", imageRepository, Version)
+
+	// Handle pull command (pre-pull image without running a container)
+	if len(args) > 0 && args[0] == "pull" {
+		if err := docker.CheckAvailable(ctx); err != nil {
+			return err
+		}
+		fmt.Printf("Pulling %s...\n", imageName)
+		return docker.PullImage(ctx, imageName)
+	}
 
 	// Step 3: Check Docker is available
 	if err := docker.CheckAvailable(ctx); err != nil {
@@ -118,6 +134,7 @@ COMMANDS:
   add zone [region] [zone-name]    Add a new zone to a region
   generate ssh                     Generate or rotate SSH keys
   update [version]                  Update soverstack (latest or specific version)
+  pull                              Pre-pull the runtime image
 
 OPTIONS:
   -v, --verbose    Show detailed output
