@@ -88,6 +88,7 @@ soverstack --version
 | `soverstack add region [name]` | Add a new region to the project |
 | `soverstack add zone [region] [zone-name]` | Add a new zone to a region |
 | `soverstack generate ssh` | Generate or rotate SSH keys |
+| `soverstack update [version]` | Update soverstack (latest or specific version) |
 
 ### Init Options
 
@@ -195,8 +196,8 @@ Suggestion:
 ### Image Pull Failed
 
 ```
-Error: Failed to pull image soverstack/cli-runtime:v1.0.0
-Suggestion: Check your internet connection and verify the version in platform.yaml
+Error: Failed to pull image soverstack/cli-runtime:1.0.0
+Suggestion: Check your internet connection
 ```
 
 ## Signal Handling
@@ -244,7 +245,11 @@ The `VERSION` file is the single source of truth:
 - **Dev**: `1.0.0-SNAPSHOT`
 - **Release**: `1.0.0`
 
-On push to `main`, CI reads `VERSION`, creates a git tag, and publishes the release.
+CI workflow:
+- Push to `develop` → builds snapshot binaries (pre-release on GitHub)
+- Tag `v*` → stable release via GoReleaser (GitHub Releases + Homebrew + Scoop)
+- **Prepare Release** (manual trigger) → creates `release/<version>` branch from develop
+- **Finish Release** (manual trigger) → merges into main, tags, triggers release
 
 ### Project Structure
 
@@ -259,12 +264,17 @@ launcher/
 │   │   ├── client.go               # Docker client init & availability check
 │   │   ├── image.go                # Image pull with progress
 │   │   └── container.go            # Container run & I/O forwarding
-│   └── platform/
-│       └── parser.go               # platform.yaml version extraction
+│   ├── selfupdate/
+│   │   └── selfupdate.go           # Self-update logic (Homebrew/Scoop/Script)
+│   └── update/
+│       └── check.go                # Background version check
 ├── install.sh                       # Linux/macOS install script
 ├── install.ps1                      # Windows install script
 ├── .goreleaser.yml                  # Release automation
-└── .github/workflows/release.yml    # CI/CD
+└── .github/workflows/
+    ├── ci.yml                       # Test, snapshot build, stable release
+    ├── prepare-release.yml          # Manual: create release branch
+    └── finish-release.yml           # Manual: merge, tag, release
 ```
 
 ## Design Principles

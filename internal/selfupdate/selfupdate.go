@@ -43,8 +43,12 @@ func Detect() Method {
 	}
 }
 
-// Run executes the update using the detected installation method.
-func Run(method Method) error {
+// Run executes the update. If targetVersion is empty, installs the latest stable.
+// If targetVersion is set, always uses the install script (package managers don't support pinning easily).
+func Run(method Method, targetVersion string) error {
+	if targetVersion != "" {
+		return runScriptWithVersion(targetVersion)
+	}
 	switch method {
 	case Homebrew:
 		return runHomebrew()
@@ -87,6 +91,50 @@ func runScript() error {
 	default:
 		return runInteractive(exec.Command("bash", "-c",
 			"curl -fsSL https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.sh | bash"))
+	}
+}
+
+func runScriptWithVersion(version string) error {
+	version = strings.TrimPrefix(version, "v")
+	tag := "v" + version
+	fmt.Printf("Installing version %s...\n", version)
+
+	repo := "soverstack/cli-launcher"
+	os_ := runtime.GOOS
+	arch := runtime.GOARCH
+
+	switch runtime.GOOS {
+	case "windows":
+		url := fmt.Sprintf("https://github.com/%s/releases/download/%s/soverstack-%s-%s-%s.zip", repo, tag, version, os_, arch)
+		script := fmt.Sprintf(`
+$dest = "$env:LOCALAPPDATA\Soverstack\soverstack.exe"
+$tmp = "$env:TEMP\soverstack-update.zip"
+Invoke-WebRequest -Uri '%s' -OutFile $tmp -UseBasicParsing
+Expand-Archive -Path $tmp -DestinationPath "$env:TEMP\soverstack-extract" -Force
+Copy-Item "$env:TEMP\soverstack-extract\soverstack.exe" $dest -Force
+Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:TEMP\soverstack-extract" -Recurse -Force -ErrorAction SilentlyContinue
+Write-Host "soverstack %s installed"
+`, url, version)
+		return runInteractive(exec.Command("powershell", "-Command", script))
+
+	default:
+		ext := "tar.gz"
+		url := fmt.Sprintf("https://github.com/%s/releases/download/%s/soverstack-%s-%s-%s.%s", repo, tag, version, os_, arch, ext)
+		script := fmt.Sprintf(`
+set -e
+tmp=$(mktemp -d)
+curl -fsSL '%s' -o "$tmp/soverstack.tar.gz"
+tar xzf "$tmp/soverstack.tar.gz" -C "$tmp"
+if [ -w /usr/local/bin ]; then
+  mv "$tmp/soverstack" /usr/local/bin/soverstack
+else
+  sudo mv "$tmp/soverstack" /usr/local/bin/soverstack
+fi
+rm -rf "$tmp"
+echo "soverstack %s installed"
+`, url, version)
+		return runInteractive(exec.Command("bash", "-c", script))
 	}
 }
 

@@ -62,8 +62,12 @@ func run() error {
 	// Handle update command (launcher-only, not forwarded to Docker)
 	if len(args) > 0 && args[0] == "update" {
 		method := selfupdate.Detect()
+		targetVersion := ""
+		if len(args) > 1 {
+			targetVersion = args[1]
+		}
 		fmt.Printf("Current version: %s (installed via %s)\n", Version, method)
-		return selfupdate.Run(method)
+		return selfupdate.Run(method, targetVersion)
 	}
 
 	// Use the launcher's own version to determine the runtime image
@@ -113,7 +117,7 @@ COMMANDS:
   add region [name]                Add a new region
   add zone [region] [zone-name]    Add a new zone to a region
   generate ssh                     Generate or rotate SSH keys
-  update                           Update soverstack to the latest version
+  update [version]                  Update soverstack (latest or specific version)
 
 OPTIONS:
   -v, --verbose    Show detailed output
