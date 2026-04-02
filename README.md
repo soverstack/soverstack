@@ -240,10 +240,7 @@ make clean      # Remove build artifacts
 
 ### Versioning
 
-The `VERSION` file is the single source of truth:
-
-- **Dev**: `1.0.0-SNAPSHOT`
-- **Release**: `1.0.0`
+The `VERSION` file is the single source of truth (e.g. `1.0.0`).
 
 CI workflow:
 - Push to `develop` → builds snapshot binaries (pre-release on GitHub)

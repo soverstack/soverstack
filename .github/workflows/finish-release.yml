@@ -22,6 +22,11 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Finishing release: $VERSION"
 
+          # Compute next dev version (bump minor: 1.0.0 → 1.1.0-dev)
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          NEXT="$major.$((minor + 1)).0-dev"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+
       - name: Merge into main and tag
         run: |
           git config user.name "github-actions[bot]"
@@ -29,6 +34,7 @@ jobs:
 
           BRANCH="${GITHUB_REF#refs/heads/}"
           VERSION="${{ steps.version.outputs.version }}"
+          NEXT="${{ steps.version.outputs.next }}"
 
           # Merge release branch into main
           git fetch origin main
@@ -42,10 +48,13 @@ jobs:
           git push origin main
           git push origin "v$VERSION"
 
-          # Merge main back into develop
+          # Merge main back into develop and bump version
           git fetch origin develop
           git checkout develop
           git merge main --no-ff -m "merge: v$VERSION back into develop"
+          echo "$NEXT" > VERSION
+          git add VERSION
+          git commit -m "bump version to $NEXT"
           git push origin develop
 
           # Delete release branch
@@ -54,4 +63,5 @@ jobs:
           echo "### Release v$VERSION finished" >> "$GITHUB_STEP_SUMMARY"
           echo "- Tag \`v$VERSION\` created → release will be built automatically" >> "$GITHUB_STEP_SUMMARY"
           echo "- Merged into \`main\` and back into \`develop\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`develop\` bumped to \`$NEXT\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Branch \`$BRANCH\` deleted" >> "$GITHUB_STEP_SUMMARY"
