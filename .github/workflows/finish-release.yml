@@ -64,6 +64,9 @@ jobs:
           # Delete release branch
           git push origin --delete "$BRANCH"
 
+      - name: Checkout tag
+        run: git checkout "v${{ steps.version.outputs.version }}"
+
       - name: Build and release
         uses: goreleaser/goreleaser-action@v6
         with:
