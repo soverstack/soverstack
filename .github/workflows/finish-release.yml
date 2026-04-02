@@ -15,6 +15,10 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Read version
         id: version
         run: |
@@ -27,7 +31,7 @@ jobs:
           NEXT="$major.$((minor + 1)).0-dev"
           echo "next=$NEXT" >> "$GITHUB_OUTPUT"
 
-      - name: Merge into main and tag
+      - name: Merge, tag, and release
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -44,7 +48,7 @@ jobs:
           # Create tag
           git tag "v$VERSION"
 
-          # Push main + tag (tag triggers stable release in ci.yml)
+          # Push main + tag
           git push origin main
           git push origin "v$VERSION"
 
@@ -60,8 +64,21 @@ jobs:
           # Delete release branch
           git push origin --delete "$BRANCH"
 
+      - name: Build and release
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: "v${{ steps.version.outputs.version }}"
+
+      - name: Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          NEXT="${{ steps.version.outputs.next }}"
           echo "### Release v$VERSION finished" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Tag \`v$VERSION\` created → release will be built automatically" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release \`v$VERSION\` published with binaries" >> "$GITHUB_STEP_SUMMARY"
           echo "- Merged into \`main\` and back into \`develop\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- \`develop\` bumped to \`$NEXT\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Branch \`$BRANCH\` deleted" >> "$GITHUB_STEP_SUMMARY"
