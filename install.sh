@@ -1,5 +1,5 @@
 #!/bin/bash
-# Soverstack Launcher Installer
+# Soverstack Installer
 # Usage: curl -fsSL https://raw.githubusercontent.com/soverstack/soverstack/main/install.sh | bash
 
 set -e
@@ -24,7 +24,7 @@ case "$ARCH" in
   *)             echo "Error: Unsupported architecture: $ARCH"; exit 1 ;;
 esac
 
-echo "Installing Soverstack Launcher (${OS}/${ARCH})..."
+echo "Installing Soverstack (${OS}/${ARCH})..."
 
 # Get latest stable release
 RELEASE_JSON=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest")

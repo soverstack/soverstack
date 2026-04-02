@@ -48,8 +48,8 @@ func run() error {
 
 	args := os.Args[1:]
 
-	// Handle version flag
-	if len(args) > 0 && (args[0] == "--version" || args[0] == "-v") {
+	// Handle version flag (only as first argument, not -v which is --verbose for commands)
+	if len(args) > 0 && args[0] == "--version" {
 		fmt.Printf("soverstack version %s\n", Version)
 		return nil
 	}
@@ -139,7 +139,7 @@ COMMANDS:
 OPTIONS:
   -v, --verbose    Show detailed output
   --debug          Show debug information
-  --version        Show version
+  --version            Show version
   -h, --help       Show this help message
 
 EXAMPLES:

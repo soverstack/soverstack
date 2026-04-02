@@ -20,7 +20,7 @@ type githubRelease struct {
 // CheckForUpdate checks GitHub for a newer version and returns a message if available.
 // Returns empty string if up-to-date or if the check fails (fail silently).
 func CheckForUpdate(currentVersion string) string {
-	if currentVersion == "dev" || strings.HasSuffix(currentVersion, "-SNAPSHOT") {
+	if currentVersion == "dev" || strings.HasSuffix(currentVersion, "-dev") {
 		return ""
 	}
 
