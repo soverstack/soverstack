@@ -1,0 +1,84 @@
+name: Finish Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/release/')
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '[:space:]')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Finishing release: $VERSION"
+
+          # Compute next dev version (bump minor: 1.0.0 → 1.1.0-dev)
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          NEXT="$major.$((minor + 1)).0-dev"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Merge, tag, and release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          VERSION="${{ steps.version.outputs.version }}"
+          NEXT="${{ steps.version.outputs.next }}"
+
+          # Merge release branch into main
+          git fetch origin main
+          git checkout main
+          git merge "$BRANCH" --no-ff -m "release: v$VERSION"
+
+          # Create tag
+          git tag "v$VERSION"
+
+          # Push main + tag
+          git push origin main
+          git push origin "v$VERSION"
+
+          # Merge main back into develop and bump version
+          git fetch origin develop
+          git checkout develop
+          git merge main --no-ff -m "merge: v$VERSION back into develop"
+          echo "$NEXT" > VERSION
+          git add VERSION
+          git commit -m "bump version to $NEXT"
+          git push origin develop
+
+          # Delete release branch
+          git push origin --delete "$BRANCH"
+
+      - name: Build and release
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+          GORELEASER_CURRENT_TAG: "v${{ steps.version.outputs.version }}"
+
+      - name: Summary
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          NEXT="${{ steps.version.outputs.next }}"
+          echo "### Release v$VERSION finished" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Release \`v$VERSION\` published with binaries" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Merged into \`main\` and back into \`develop\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`develop\` bumped to \`$NEXT\`" >> "$GITHUB_STEP_SUMMARY"

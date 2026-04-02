@@ -1,13 +1,13 @@
-# Soverstack Launcher Installer for Windows
-# Usage: irm https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.ps1 | iex
+# Soverstack Installer for Windows
+# Usage: irm https://raw.githubusercontent.com/soverstack/soverstack/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
-$repo = "soverstack/cli-launcher"
+$repo = "soverstack/soverstack"
 $installDir = "$env:LOCALAPPDATA\Soverstack"
 $binaryName = "soverstack.exe"
 
-Write-Host "Installing Soverstack Launcher..." -ForegroundColor Cyan
+Write-Host "Installing Soverstack..." -ForegroundColor Cyan
 
 # Get latest stable release
 $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing

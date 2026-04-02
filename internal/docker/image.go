@@ -13,7 +13,7 @@ import (
 // PullImage pulls a Docker image from the registry with progress display.
 // If the image already exists locally, Docker will use the cached version.
 //
-// imageName should be in the format: "repository:tag" (e.g., "soverstack/runtime:v1.0.0")
+// imageName should be in the format: "repository:tag" (e.g., "soverstack/cli-runtime:v1.0.0")
 func PullImage(ctx context.Context, imageName string) error {
 	cli, err := NewClient()
 	if err != nil {
