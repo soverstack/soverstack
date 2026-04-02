@@ -1,0 +1,47 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Read and fix version
+        id: version
+        run: |
+          SNAPSHOT=$(cat VERSION | tr -d '[:space:]')
+          VERSION=${SNAPSHOT%-SNAPSHOT}
+          if [ "$SNAPSHOT" = "$VERSION" ]; then
+            echo "::error::VERSION ($SNAPSHOT) is not a SNAPSHOT version"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "snapshot=$SNAPSHOT" >> "$GITHUB_OUTPUT"
+          echo "Preparing release: $SNAPSHOT → $VERSION"
+
+      - name: Create release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="release/${{ steps.version.outputs.version }}"
+          git checkout -b "$BRANCH"
+
+          echo "${{ steps.version.outputs.version }}" > VERSION
+          git add VERSION
+          git commit -m "release: ${{ steps.version.outputs.version }}"
+          git push origin "$BRANCH"
+
+          echo "### Release branch created" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`${{ steps.version.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Next step: run **Finish Release** on branch \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
