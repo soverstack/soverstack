@@ -1,0 +1,43 @@
+name: Prepare Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: develop
+
+      - name: Read version
+        id: version
+        run: |
+          RAW=$(cat VERSION | tr -d '[:space:]')
+          VERSION=${RAW%-dev}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Preparing release: $RAW → $VERSION"
+
+      - name: Create release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          VERSION="${{ steps.version.outputs.version }}"
+          BRANCH="release/$VERSION"
+
+          git checkout -b "$BRANCH"
+          echo "$VERSION" > VERSION
+          git add VERSION
+          git commit -m "release: $VERSION"
+          git push origin "$BRANCH"
+
+          echo "### Release branch created" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Branch: \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`$VERSION\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Next step: run **Finish Release** on branch \`$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
