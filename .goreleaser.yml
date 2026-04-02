@@ -54,7 +54,7 @@ release:
 
     **Requirements:** [Docker](https://www.docker.com/products/docker-desktop/)
 
-homebrew_casks:
+brews:
   - repository:
       owner: soverstack
       name: homebrew-tap
@@ -62,9 +62,6 @@ homebrew_casks:
     homepage: "https://github.com/soverstack/cli-launcher"
     description: "Sovereign infrastructure orchestration CLI"
     license: "AGPL-3.0-only"
-    dependencies:
-      - name: docker
-        type: recommended
 
 scoops:
   - repository:
