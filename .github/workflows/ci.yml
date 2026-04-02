@@ -51,14 +51,13 @@ jobs:
 
       - name: Publish dev pre-release
         run: |
-          TAG="dev"
-          VERSION="${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.version.outputs.version }}"
           gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
           git tag -f "$TAG"
           git push origin "$TAG" --force
           gh release create "$TAG" \
-            --title "Development Build ($VERSION)" \
-            --notes "Development build from \`develop\` — version \`$VERSION\`. Not a stable release." \
+            --title "$TAG" \
+            --notes "Development build from \`develop\`. Not a stable release." \
             --prerelease \
             dist/soverstack-*.*
         env:
