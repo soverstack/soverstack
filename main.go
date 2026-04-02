@@ -7,9 +7,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/soverstack/cli-launcher/internal/docker"
-	"github.com/soverstack/cli-launcher/internal/selfupdate"
-	"github.com/soverstack/cli-launcher/internal/update"
+	"github.com/soverstack/soverstack/internal/docker"
+	"github.com/soverstack/soverstack/internal/selfupdate"
+	"github.com/soverstack/soverstack/internal/update"
 )
 
 const (

@@ -47,10 +47,10 @@ scoop install soverstack
 
 ```bash
 # Linux / macOS
-curl -fsSL https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/soverstack/soverstack/main/install.sh | bash
 
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/soverstack/soverstack/main/install.ps1 | iex
 ```
 
 ### Build from Source
@@ -58,8 +58,8 @@ irm https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.ps1 |
 Requires [Go 1.25+](https://go.dev/dl/).
 
 ```bash
-git clone https://github.com/soverstack/cli-launcher.git
-cd cli-launcher
+git clone https://github.com/soverstack/soverstack.git
+cd soverstack
 make build
 sudo mv soverstack /usr/local/bin/
 ```

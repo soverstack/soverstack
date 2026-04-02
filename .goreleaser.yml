@@ -37,7 +37,7 @@ checksum:
 release:
   github:
     owner: soverstack
-    name: cli-launcher
+    name: soverstack
   header: |
     ## Install
 
@@ -59,7 +59,7 @@ brews:
       owner: soverstack
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/soverstack/cli-launcher"
+    homepage: "https://github.com/soverstack/soverstack"
     description: "Sovereign infrastructure orchestration CLI"
     license: "AGPL-3.0-only"
 
@@ -68,6 +68,6 @@ scoops:
       owner: soverstack
       name: scoop-bucket
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    homepage: "https://github.com/soverstack/cli-launcher"
+    homepage: "https://github.com/soverstack/soverstack"
     description: "Sovereign infrastructure orchestration CLI"
     license: "AGPL-3.0-only"

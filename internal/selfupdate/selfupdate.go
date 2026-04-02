@@ -87,10 +87,10 @@ func runScript() error {
 	switch runtime.GOOS {
 	case "windows":
 		return runInteractive(exec.Command("powershell", "-Command",
-			"irm https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.ps1 | iex"))
+			"irm https://raw.githubusercontent.com/soverstack/soverstack/main/install.ps1 | iex"))
 	default:
 		return runInteractive(exec.Command("bash", "-c",
-			"curl -fsSL https://raw.githubusercontent.com/soverstack/cli-launcher/main/install.sh | bash"))
+			"curl -fsSL https://raw.githubusercontent.com/soverstack/soverstack/main/install.sh | bash"))
 	}
 }
 
@@ -99,7 +99,7 @@ func runScriptWithVersion(version string) error {
 	tag := "v" + version
 	fmt.Printf("Installing version %s...\n", version)
 
-	repo := "soverstack/cli-launcher"
+	repo := "soverstack/soverstack"
 	os_ := runtime.GOOS
 	arch := runtime.GOARCH
 

@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	releaseURL = "https://api.github.com/repos/soverstack/cli-launcher/releases/latest"
+	releaseURL = "https://api.github.com/repos/soverstack/soverstack/releases/latest"
 	timeout    = 3 * time.Second
 )
 
