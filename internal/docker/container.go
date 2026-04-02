@@ -16,7 +16,7 @@ import (
 
 // ContainerConfig holds the configuration for running a container
 type ContainerConfig struct {
-	Image   string            // Docker image name (e.g., "soverstack/runtime:v1.0.0")
+	Image   string            // Docker image name (e.g., "soverstack/cli-runtime:v1.0.0")
 	Args    []string          // Command arguments to pass to the container
 	EnvVars []string          // Environment variables in "KEY=VALUE" format
 	WorkDir string            // Host working directory to mount

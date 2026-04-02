@@ -8,6 +8,8 @@ import (
 
 	"github.com/soverstack/cli-launcher/internal/docker"
 	"github.com/soverstack/cli-launcher/internal/platform"
+	"github.com/soverstack/cli-launcher/internal/selfupdate"
+	"github.com/soverstack/cli-launcher/internal/update"
 )
 
 const (
@@ -33,11 +35,17 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
 
-	// Step 1: Capture all arguments (everything after the binary name)
-	// Examples:
-	//   soverstack validate platform.yaml → args = ["validate", "platform.yaml"]
-	//   soverstack plan platform.yaml → args = ["plan", "platform.yaml"]
-	//   soverstack dns:update example.com → args = ["dns:update", "example.com"]
+	// Check for updates in background (non-blocking, fails silently)
+	updateMsg := make(chan string, 1)
+	go func() {
+		updateMsg <- update.CheckForUpdate(Version)
+	}()
+	defer func() {
+		if msg := <-updateMsg; msg != "" {
+			fmt.Fprint(os.Stderr, msg)
+		}
+	}()
+
 	args := os.Args[1:]
 
 	// Handle version flag
@@ -52,7 +60,14 @@ func run() error {
 		return nil
 	}
 
-	// Step 2: Extract version from platform.yaml
+	// Handle update command (launcher-only, not forwarded to Docker)
+	if len(args) > 0 && args[0] == "update" {
+		method := selfupdate.Detect()
+		fmt.Printf("Current version: %s (installed via %s)\n", Version, method)
+		return selfupdate.Run(method)
+	}
+
+	// Extract version from platform.yaml
 	// Falls back to launcher's own version + "-SNAPSHOT" if not found
 	version, err := platform.ExtractVersion(args)
 	if err != nil || version == "latest" {
@@ -93,41 +108,37 @@ func run() error {
 }
 
 func printHelp() {
-	fmt.Println(`Soverstack Launcher - Native proxy for Soverstack CLI
+	fmt.Println(`Soverstack - Sovereign infrastructure orchestration
 
 USAGE:
-  soverstack <command> [arguments...]
+  soverstack <command> [arguments...] [options]
 
 COMMANDS:
-  validate <platform-yaml>     Validate platform configuration
-  plan <platform-yaml>         Generate execution plan
-  apply                        Apply infrastructure changes
-  dns:update <domain>          Update DNS nameservers
-  destroy <resource> <id>      Destroy infrastructure resource
+  init [project-name]              Initialize a new project
+  validate [path]                  Validate project configuration
+  plan [path]                      Show execution plan
+  apply [path]                     Apply infrastructure changes
+  add region [name]                Add a new region
+  add zone [region] [zone-name]    Add a new zone to a region
+  generate ssh                     Generate or rotate SSH keys
+  update                           Update soverstack to the latest version
 
-FLAGS:
-  --version, -v    Show launcher version
-  --help, -h       Show this help message
+OPTIONS:
+  -v, --verbose    Show detailed output
+  --debug          Show debug information
+  --version        Show version
+  -h, --help       Show this help message
 
 EXAMPLES:
-  soverstack validate platform.yaml
-  soverstack plan platform.yaml
-  soverstack dns:update example.com
-
-HOW IT WORKS:
-  The launcher is a transparent proxy that:
-  1. Reads platform.yaml to determine runtime version
-  2. Pulls the soverstack/runtime:<version> Docker image
-  3. Mounts your project directory at /workspace in the container
-  4. Runs the CLI inside the container with your arguments
-
-  The runtime reads .env, platform.yaml, inventory/, workloads/,
-  and .ssh/ directly from the mounted directory. No environment
-  variables are forwarded from the host.
+  soverstack init my-infra
+  soverstack validate
+  soverstack plan --verbose
+  soverstack apply
+  soverstack add region us --zones portland,seattle
+  soverstack generate ssh --all
 
 REQUIREMENTS:
-  - Docker must be installed and running
-  - Internet connection (for first-time image pull)
+  Docker must be installed and running.
 
-For more information, visit: https://soverstack.com`)
+https://soverstack.io`)
 }
