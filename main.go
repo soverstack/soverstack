@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/soverstack/soverstack/internal/docker"
@@ -94,10 +95,17 @@ func run() error {
 		return err
 	}
 
-	// Step 4: Pull Docker image (or use cached version)
-	// Docker automatically caches images, so this is fast on subsequent runs
+	// Step 4: Pull Docker image, fallback to latest stable if not found (only for non-dev versions)
 	if err := docker.PullImage(ctx, imageName); err != nil {
-		return err
+		if strings.HasSuffix(Version, "-dev") {
+			return fmt.Errorf("image %s not found — dev versions require an exact matching image", imageName)
+		}
+		fallback := fmt.Sprintf("%s:latest", imageRepository)
+		fmt.Fprintf(os.Stderr, "Image %s not found, falling back to %s\n", imageName, fallback)
+		imageName = fallback
+		if err := docker.PullImage(ctx, fallback); err != nil {
+			return err
+		}
 	}
 
 	// Step 5: Get current working directory
